@@ -206,7 +206,7 @@ void setup() {
    pixels.show();   // Send the updated pixel colors to the hardware.
 }
    
-   delay(3000);
+   delay(5000);
    wdt_enable(WDTO_4S);
    pixels.clear();
    pixels.show();
