@@ -124,11 +124,11 @@ void
 send(char c)
 {
   wdt_reset();  // reset the watchdog
-  int i ;
+  int i;
   if (c == ' ') {
-    Serial.print(c) ;
-    delay(7*DOTLEN) ;
-    return ;
+    Serial.print(c);
+    delay(7*DOTLEN);
+    return;
   }
   for (i=0; i<N_MORSE; i++) {
     if (morsetab[i].c == c) {
