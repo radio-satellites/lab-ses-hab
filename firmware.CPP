@@ -6,8 +6,8 @@
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 
-#define NUM_CYCLES 10 // Number of cycles to activate visual beacon
-#define NUM_CYCLES_AUD 15 //Number of cycles to activate audio beacon
+#define NUM_CYCLES 1 // Number of cycles to activate visual beacon
+#define NUM_CYCLES_AUD 2 //Number of cycles to activate audio beacon
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN        6 // On Trinket or Gemma, suggest changing this to 1
@@ -219,16 +219,20 @@ void loop() {
     light_on = true; //We're nearing the end of the flight, start up the recovery beacon!
   }
   if (cycles == NUM_CYCLES){
+    wdt_reset();  // reset the watchdog
     digitalWrite(LEDpin, HIGH);
-    delay(4000);
+    delay(3000);
     digitalWrite(LEDpin, LOW);
+    wdt_reset();  // reset the watchdog
     sendmsg("LB ACTIVE");
     
   }
   if (cycles == NUM_CYCLES_AUD){
     digitalWrite(LEDpin, HIGH);
-    delay(3000);
+    wdt_reset();  // reset the watchdog
+    delay(2000);
     digitalWrite(LEDpin, LOW);
+    wdt_reset();  // reset the watchdog
     sendmsg("AUX ACTIVE");
   }
   if (cycles >= NUM_CYCLES_AUD){
