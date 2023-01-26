@@ -207,7 +207,7 @@ void setup() {
 }
    
    delay(3000);
-   wdt_enable(WDTO_2S);
+   wdt_enable(WDTO_4S);
    pixels.clear();
    pixels.show();
    if (!driver.init())
