@@ -1,6 +1,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <RH_ASK.h>
 #include <SPI.h>
+#include <avr/wdt.h>
 #ifdef __AVR__
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
@@ -122,6 +123,7 @@ dit()
 void
 send(char c)
 {
+  wdt_reset();  // reset the watchdog
   int i ;
   if (c == ' ') {
     Serial.print(c) ;
@@ -146,6 +148,7 @@ send(char c)
   }
   /* if we drop off the end, then we send a space */
   Serial.print("?") ;
+
 }
 
 void
@@ -194,6 +197,7 @@ void setup() {
   pinMode(5,OUTPUT);
   Serial.begin(9600) ;
   Serial.println("Visual Beacon Start...") ;
+  wdt_disable(); //prevent the watchdog from triggering
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
   pixels.clear(); 
   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
@@ -201,7 +205,9 @@ void setup() {
 
    pixels.show();   // Send the updated pixel colors to the hardware.
 }
+   
    delay(3000);
+   wdt_enable(WDTO_2S);
    pixels.clear();
    pixels.show();
    if (!driver.init())
