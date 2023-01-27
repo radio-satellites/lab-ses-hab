@@ -139,7 +139,7 @@ void sendMsg(char *str) {
 
 
 //Radio stuff
-RH_ASK driver(2000, 7, LED_PIN, BUZZER_PIN);
+RH_ASK driver(2000, 7, LED_PIN, 4);
 //Which will initialise the driver at 2000 bps, receive on GPIO7, transmit on GPIO12, PTT on GPIO5.
 // This is very poorly documented. PTT is not needed, but whatever.
 
