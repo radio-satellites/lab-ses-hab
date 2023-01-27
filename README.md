@@ -1,7 +1,7 @@
 # lab-ses-hab
 Software for the LAB-SES HAB (wip). It's really messy as of now. 
 
-Watchdog function hasn't been tested yet, but I'm pretty sure it works.
+Watchdog function hasn't been tested yet, but I'm pretty sure it works. EDIT: Yes it does work
 
 The software will only run on AVR chipsets, since it's AVR specific. I'm sure you can modify the watchdog with a seperate circuit to work better on other chipsets if needed. 
 
