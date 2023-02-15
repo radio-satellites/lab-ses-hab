@@ -1,7 +1,7 @@
 /*
 LAB SES 1 High Altitude Balloon downlink firmware written by VE3SVF.
 
-***NEED TO FINISH*** camera trigger system
+***NEED TO FINISH*** camera trigger system. It has not been tested yet. 
 
 This is not quite yet tested on real hardware (YET!)
 
@@ -12,11 +12,15 @@ This is not quite yet tested on real hardware (YET!)
 
 char datastring[80];
 int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
-int cycles = 0;
-
+unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
+const long interval = 100; 
+unsigned long previousMillis = 0;  
+int ledState = LOW;  
+const int ledPin = 5; //Camera pin
 
 void setup() {
-  pinMode(3,OUTPUT);
+  pinMode(3,OUTPUT); //RTTY output
+  pinMode(ledPin, OUTPUT); //Camera trigger
 }
 
 void loop() {
@@ -46,9 +50,12 @@ void rtty_txstring (char * string)
   /* Simple function to sent a char at a time to 
      ** rtty_txbyte function. 
     ** NB Each char is one byte (8 Bits)
+    Also a camera trigger function. This is because it runs fast enough, but not TOO fast.
     */
  
   char c;
+  
+  unsigned long currentMillis = millis(); //Camera
  
   c = *string++;
  
@@ -56,6 +63,19 @@ void rtty_txstring (char * string)
   {
     rtty_txbyte (c);
     c = *string++;
+    cycles++; //Camera stuff
+      
+      //Trigger camera
+    if (currentMillis - previousMillis >= interval) {
+      previousMillis = currentMillis;
+      if (ledState == LOW) {
+          ledState = HIGH;
+      } 
+      else {
+        ledState = LOW;
+      }
+        
+    }
   }
 }
  
