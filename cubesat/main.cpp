@@ -5,10 +5,17 @@ LAB SES 1 High Altitude Balloon downlink firmware written by VE3SVF.
 
 This is not quite yet tested on real hardware (YET!)
 
+Thanks:
+https://wiki-content.arduino.cc/en/Tutorial/BuiltInExamples/BlinkWithoutDelay
+https://reference.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/
+
+for the non-blocking camera help!!!
+
 */
 
 #include <string.h>
 #include <util/crc16.h>
+#include <Servo.h>
 
 char datastring[80];
 int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
@@ -18,9 +25,13 @@ unsigned long previousMillis = 0;
 int ledState = LOW;  
 const int ledPin = 5; //Camera pin
 
+Servo myservo;
+
 void setup() {
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
+  myservo.attach(9); 
+  myservo.write(0);
 }
 
 void loop() {
@@ -35,9 +46,32 @@ void loop() {
     sprintf(voltage_string,readVcc()); //Read input battery voltage, converted into char
     strcat(datastring,voltage_string);
     rtty_txstring (datastring); //transmit it
-    cycles = 0; //Zero because right after it will advance to 1, triggering the first if statement
+    cycle_num = 0; //Zero because right after it will advance to 1, triggering the first if statement
     
   }
+  if (cycles == 2000){
+    //CUTDOWN TIMEEEEEEEE
+    //Um... cutdown!
+    sprintf(datastring,"CUTDOWN IS A GO");
+    rtty_txstring (datastring);
+    
+    myservo.write(60);
+    delay(500);
+    myservo.write(0);
+    delay(500);
+    myservo.write(70);
+    delay(500);
+    myservo.write(0);
+    delay(500);
+    myservo.write(80);
+    delay(500);
+    myservo.write(0);
+    delay(500);
+    //Above: let's make sure everything works! :) :)
+    sprintf(datastring,"DEPLOY PARACHUTE SUCCESS");
+    rtty_txstring (datastring);
+  }
+  cycle_num++;
   cycles++;
     
 }
@@ -63,7 +97,7 @@ void rtty_txstring (char * string)
   {
     rtty_txbyte (c);
     c = *string++;
-    cycles++; //Camera stuff
+    //cycles++; //Camera stuff
       
       //Trigger camera
     if (currentMillis - previousMillis >= interval) {
