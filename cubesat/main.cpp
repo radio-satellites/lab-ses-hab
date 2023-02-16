@@ -23,33 +23,42 @@ unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
 const long interval = 100; 
 unsigned long previousMillis = 0;  
 int ledState = LOW;  
-const int ledPin = 5; //Camera pin
+const int ledPin = 8; //Camera pin
 
 Servo myservo;
 
 void setup() {
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
-  myservo.attach(9); 
+  myservo.attach(10); 
   myservo.write(0);
+  Serial.begin(9600);
+  Serial.print("Hello. Starting!");
 }
 
 void loop() {
   if (cycle_num == 1){
+    //Serial.print("Start loop 1");
     sprintf(datastring,"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM");
     rtty_txstring (datastring);
+    char datastring[80];
+    //Serial.print("Finished loop 1");
     
   }
   if (cycle_num == 2){
     sprintf(datastring,"TLM: ");
     char voltage_string[10]; //Just to be safe!
-    sprintf(voltage_string,readVcc()); //Read input battery voltage, converted into char
+    int voltage = readVcc();
+    dtostrf(voltage, 4, 0, voltage_string);
+    //Serial.print(voltage);
+    //Serial.print(voltage_string);
     strcat(datastring,voltage_string);
     rtty_txstring (datastring); //transmit it
-    cycle_num = 0; //Zero because right after it will advance to 1, triggering the first if statement
+    char datastring[80];
+    cycle_num = 0;
     
   }
-  if (cycles == 2000){
+  if (cycles == 2){
     //CUTDOWN TIMEEEEEEEE
     //Um... cutdown!
     sprintf(datastring,"CUTDOWN IS A GO");
@@ -73,6 +82,8 @@ void loop() {
   }
   cycle_num++;
   cycles++;
+  Serial.print(cycles);
+  Serial.print("\n");
     
 }
 
@@ -89,7 +100,7 @@ void rtty_txstring (char * string)
  
   char c;
   
-  unsigned long currentMillis = millis(); //Camera
+  
  
   c = *string++;
  
@@ -99,17 +110,7 @@ void rtty_txstring (char * string)
     c = *string++;
     //cycles++; //Camera stuff
       
-      //Trigger camera
-    if (currentMillis - previousMillis >= interval) {
-      previousMillis = currentMillis;
-      if (ledState == LOW) {
-          ledState = HIGH;
-      } 
-      else {
-        ledState = LOW;
-      }
-        
-    }
+
   }
 }
  
@@ -143,6 +144,21 @@ void rtty_txbyte (char c)
  
   rtty_txbit (1); // Stop bit
   rtty_txbit (1); // Stop bit
+   //Trigger camera
+  unsigned long currentMillis = millis(); //Camera
+  if (currentMillis - previousMillis >= interval) {
+     previousMillis = currentMillis;
+      if (ledState == LOW) {
+          ledState = HIGH;
+      } 
+      else {
+        ledState = LOW;
+      }
+   digitalWrite(ledPin, ledState);
+   Serial.print(ledState);
+   Serial.print("\n");
+        
+    }
 }
  
 void rtty_txbit (int bit)
