@@ -30,7 +30,7 @@ Servo myservo;
 void setup() {
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
-  myservo.attach(10); 
+  myservo.attach(9); 
   myservo.write(0);
   Serial.begin(9600);
   Serial.print("Hello. Starting!");
@@ -48,7 +48,7 @@ void loop() {
   if (cycle_num == 2){
     sprintf(datastring,"TLM: ");
     char voltage_string[10]; //Just to be safe!
-    int voltage = readVcc();
+    int voltage = readVccaverage();
     dtostrf(voltage, 4, 0, voltage_string);
     //Serial.print(voltage);
     //Serial.print(voltage_string);
@@ -58,7 +58,7 @@ void loop() {
     cycle_num = 0;
     
   }
-  if (cycles == 2){
+  if (cycles == 2000){
     //CUTDOWN TIMEEEEEEEE
     //Um... cutdown!
     sprintf(datastring,"CUTDOWN IS A GO");
@@ -211,5 +211,24 @@ long readVcc() {
   result = ADCL;
   result |= ADCH<<8;
   result = 1126400L / result; // Back-calculate AVcc in mV
+  return result;
+}
+
+float average (int * array, int len)  // assuming array is int.
+{
+  long sum = 0L ;  // sum will be larger than an item, long for safety.
+  for (int i = 0 ; i < len ; i++)
+    sum += array [i] ;
+  return  ((float) sum) / len ;  // average will be fractional, so float may be appropriate.
+}
+
+long readVccaverage(){
+  int average_array[255]; //Averaging array
+  long result;
+  for (int i = 0; i <= 255; i++) {
+    //Average 255 times
+    average_array[i] = readVcc();
+  }
+  result = average(average_array,255);
   return result;
 }
