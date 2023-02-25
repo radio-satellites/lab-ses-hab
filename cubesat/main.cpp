@@ -15,9 +15,29 @@ for the non-blocking camera help!!!
 
 #include <string.h>
 #include <util/crc16.h>
-#include <Servo.h>
+#include <stdlib.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_Sensor.h>
+#include "Adafruit_BMP3XX.h"
 
-char datastring[80];
+#ifdef __arm__
+// should use uinstd.h to define sbrk but Due causes a conflict
+extern "C" char* sbrk(int incr);
+#else  // __ARM__
+extern char *__brkval;
+#endif  // __arm__ 
+
+//Above: memory stuff
+
+#define SEALEVELPRESSURE_HPA (1000) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
+
+Adafruit_BMP3XX bmp;
+
+char datastring[70];
+
+const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
+
 int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
 unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
 const long interval = 100; 
@@ -25,21 +45,35 @@ unsigned long previousMillis = 0;
 int ledState = LOW;  
 const int ledPin = 8; //Camera pin
 
-Servo myservo;
+//Servo myservo;
 
 void setup() {
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
-  myservo.attach(9); 
-  myservo.write(0);
+  //myservo.attach(9); 
+  //myservo.write(0);
   Serial.begin(9600);
-  Serial.print("Hello. Starting!");
+  if (!bmp.begin_I2C()) {   // hardware I2C mode, can pass in address & alt Wire
+  //if (! bmp.begin_SPI(BMP_CS)) {  // hardware SPI mode  
+  //if (! bmp.begin_SPI(BMP_CS, BMP_SCK, BMP_MISO, BMP_MOSI)) {  // software SPI mode
+    Serial.println("Could not find a valid BMP3 sensor, this is bad!");
+    while (1);
+  }
+    // Set up oversampling and filter initialization
+  bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
+  bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
+  bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
+  bmp.setOutputDataRate(BMP3_ODR_50_HZ);
+  if (! bmp.performReading()) { //First reading is always off, read it once. 
+    Serial.println("Failed to perform reading :(");
+    return;
+  }
 }
 
 void loop() {
   if (cycle_num == 1){
     //Serial.print("Start loop 1");
-    sprintf(datastring,"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM");
+    sprintf_P(datastring,regular_message);
     rtty_txstring (datastring);
     char datastring[80];
     //Serial.print("Finished loop 1");
@@ -54,10 +88,11 @@ void loop() {
     //Serial.print(voltage_string);
     strcat(datastring,voltage_string);
     rtty_txstring (datastring); //transmit it
-    char datastring[80];
+    char datastring[70];
     cycle_num = 0;
     
   }
+  /*
   if (cycles == 2000){
     //CUTDOWN TIMEEEEEEEE
     //Um... cutdown!
@@ -80,10 +115,12 @@ void loop() {
     sprintf(datastring,"DEPLOY PARACHUTE SUCCESS");
     rtty_txstring (datastring);
   }
+  */
+  
   cycle_num++;
   cycles++;
-  Serial.print(cycles);
-  Serial.print("\n");
+  //Serial.print(cycles);
+  //Serial.print("\n");
     
 }
 
@@ -154,9 +191,9 @@ void rtty_txbyte (char c)
       else {
         ledState = LOW;
       }
-   digitalWrite(ledPin, ledState);
-   Serial.print(ledState);
-   Serial.print("\n");
+   //digitalWrite(ledPin, ledState);
+   //Serial.print(ledState);
+   //Serial.print("\n");
         
     }
 }
@@ -223,6 +260,7 @@ float average (int * array, int len)  // assuming array is int.
 }
 
 long readVccaverage(){
+  int adjustment_factor = 300; //This is for THE SPECIFIC HARDWARE running LAB SES 1. Change when switching to other arduinos!!
   int average_array[255]; //Averaging array
   long result;
   for (int i = 0; i <= 255; i++) {
@@ -230,5 +268,41 @@ long readVccaverage(){
     average_array[i] = readVcc();
   }
   result = average(average_array,255);
-  return result;
+  return result+adjustment_factor;
+}
+
+
+long read_pressure(){
+  if (! bmp.performReading()) {
+    Serial.println("Failed to perform reading :(");
+    return;
+  }
+  return bmp.pressure / 100.0;
+}
+
+long read_alt(){
+  if (! bmp.performReading()) {
+    Serial.println("Failed to perform reading :(");
+    return;
+  }
+  return bmp.readAltitude(SEALEVELPRESSURE_HPA);
+}
+
+long read_temp(){
+  if (! bmp.performReading()) {
+    Serial.println("Failed to perform reading :(");
+    return;
+  }
+  return bmp.temperature;
+}
+
+int freeMemory() {
+  char top;
+#ifdef __arm__
+  return &top - reinterpret_cast<char*>(sbrk(0));
+#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
+  return &top - __brkval;
+#else  // __arm__
+  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
+#endif  // __arm__
 }
