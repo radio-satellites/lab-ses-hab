@@ -48,6 +48,7 @@ const int ledPin = 8; //Camera pin
 //Servo myservo;
 
 void setup() {
+  //datastring.reserve(70); //MEMORYYYYYYYYYYYYYYYYYYYYYYY
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
   //myservo.attach(9); 
@@ -80,13 +81,32 @@ void loop() {
     
   }
   if (cycle_num == 2){
+    char alt_string[10];
+    char temp_string[10];
+    char pressure_string[10];
+    
+    Serial.print("Start.");
     sprintf(datastring,"TLM: ");
+    Serial.print("Good.");
     char voltage_string[10]; //Just to be safe!
-    int voltage = readVccaverage();
+    Serial.print("Good.");
+    int voltage = readVcc();
+    Serial.print("Good.");
     dtostrf(voltage, 4, 0, voltage_string);
+    Serial.print("Good.");
+    long temp = read_temp()*100;
+    long alt = read_alt()*100;
+    long pressure = read_pressure()*100;
+    ltoa(temp,temp_string,10);
+    ltoa(alt,alt_string,10);
+    ltoa(pressure,pressure_string,10);
+    Serial.print("Good.");
     //Serial.print(voltage);
     //Serial.print(voltage_string);
-    strcat(datastring,voltage_string);
+    //strcat(datastring,voltage_string);
+    snprintf(datastring,"$$$,%l,%l,%l",temp,alt,pressure);
+    Serial.print("Good.");
+    Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
     char datastring[70];
     cycle_num = 0;
