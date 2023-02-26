@@ -38,7 +38,7 @@ char datastring[70];
 
 const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
-int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
+int cycle_num = 2; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
 unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
 const long interval = 100; 
 unsigned long previousMillis = 0;  
@@ -81,32 +81,35 @@ void loop() {
     
   }
   if (cycle_num == 2){
-    char alt_string[10];
-    char temp_string[10];
-    char pressure_string[10];
+    char alt_string[20];
+    char temp_string[20];
+    char pressure_string[20];
     
-    Serial.print("Start.");
+    //Serial.print("Start.");
     sprintf(datastring,"TLM: ");
-    Serial.print("Good.");
+    //Serial.print("Good.");
     char voltage_string[10]; //Just to be safe!
-    Serial.print("Good.");
+    //Serial.print("Good.");
     int voltage = readVcc();
-    Serial.print("Good.");
+    //Serial.print("Good.");
     dtostrf(voltage, 4, 0, voltage_string);
-    Serial.print("Good.");
+    //Serial.print("Good.");
     long temp = read_temp()*100;
     long alt = read_alt()*100;
     long pressure = read_pressure()*100;
+    //Serial.print(pressure);
+    //Serial.print("\n");
     ltoa(temp,temp_string,10);
     ltoa(alt,alt_string,10);
     ltoa(pressure,pressure_string,10);
-    Serial.print("Good.");
+    //Serial.print(pressure_string);
+    //Serial.print("Good.");
     //Serial.print(voltage);
     //Serial.print(voltage_string);
     //strcat(datastring,voltage_string);
-    snprintf(datastring,"$$$,%l,%l,%l",temp,alt,pressure);
-    Serial.print("Good.");
-    Serial.print(datastring);
+    sprintf(datastring, "$$$,%s,%s,%s\n",pressure_string,alt_string,temp_string);
+    //Serial.print("Good. DATASTRING: ");
+    //Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
     char datastring[70];
     cycle_num = 0;
