@@ -20,6 +20,8 @@ for the non-blocking camera help!!!
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BMP3XX.h"
+#include <TinyGPSPlus.h>
+#include <SoftwareSerial.h>
 
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
@@ -44,8 +46,15 @@ const long interval = 100;
 unsigned long previousMillis = 0;  
 int ledState = LOW;  
 const int ledPin = 8; //Camera pin
+bool newData = false;
+unsigned long chars;
+unsigned short sentences, failed;
 
 //Servo myservo;
+
+TinyGPSPlus gps;
+SoftwareSerial ss(6, 7); //GPS
+
 
 void setup() {
   //datastring.reserve(70); //MEMORYYYYYYYYYYYYYYYYYYYYYYY
@@ -54,6 +63,7 @@ void setup() {
   //myservo.attach(9); 
   //myservo.write(0);
   Serial.begin(9600);
+  ss.begin(9600); //Begin GPS comms
   if (!bmp.begin_I2C()) {   // hardware I2C mode, can pass in address & alt Wire
   //if (! bmp.begin_SPI(BMP_CS)) {  // hardware SPI mode  
   //if (! bmp.begin_SPI(BMP_CS, BMP_SCK, BMP_MISO, BMP_MOSI)) {  // software SPI mode
@@ -84,7 +94,32 @@ void loop() {
     char alt_string[20];
     char temp_string[20];
     char pressure_string[20];
-    
+    char lat_string[20];
+    char long_string[20];
+    long latitude = 0.000000;
+    long longitude = 0.000000;
+      // For one second we parse GPS data and report some key values
+  for (unsigned long start = millis(); millis() - start < 1000;)
+  {
+    while (ss.available())
+    {
+      if (gps.encode(ss.read())) // Did a new valid sentence come in?
+        newData = true;
+    }
+  }
+  if (newData){
+    if (gps.location.isValid())
+  {
+    latitude = gps.location.lat();
+    longitude = gps.location.lng();
+    newData = false;
+  }
+  }
+  else{
+    latitude = 0.000000;
+    longitude = 0.000000;
+  }
+  
     //Serial.print("Start.");
     sprintf(datastring,"TLM: ");
     //Serial.print("Good.");
@@ -97,17 +132,21 @@ void loop() {
     long temp = read_temp()*100;
     long alt = read_alt()*100;
     long pressure = read_pressure()*100;
+    latitude = latitude*1000000;
+    longitude = longitude * -1000000; //ONLY WORKS FOR TORONTO, ONTARIO!!!!
     //Serial.print(pressure);
     //Serial.print("\n");
     ltoa(temp,temp_string,10);
     ltoa(alt,alt_string,10);
     ltoa(pressure,pressure_string,10);
+    ltoa(latitude,lat_string,10);
+    ltoa(longitude,long_string,10);
     //Serial.print(pressure_string);
-    //Serial.print("Good.");
+    Serial.print("Good.");
     //Serial.print(voltage);
     //Serial.print(voltage_string);
     //strcat(datastring,voltage_string);
-    sprintf(datastring, "$$$,%s,%s,%s\n",pressure_string,alt_string,temp_string);
+    sprintf(datastring, "$$,%s,%s,%s,%s,%s\n",pressure_string,alt_string,temp_string,lat_string,long_string);
     //Serial.print("Good. DATASTRING: ");
     //Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
