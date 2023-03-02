@@ -46,14 +46,15 @@ const long interval = 100;
 unsigned long previousMillis = 0;  
 int ledState = LOW;  
 const int ledPin = 8; //Camera pin
-bool newData = false;
 unsigned long chars;
 unsigned short sentences, failed;
+
+static const int RXPin = 12, TXPin = 4;
 
 //Servo myservo;
 
 TinyGPSPlus gps;
-SoftwareSerial ss(6, 7); //GPS
+SoftwareSerial ss(RXPin, TXPin);
 
 
 void setup() {
@@ -63,7 +64,6 @@ void setup() {
   //myservo.attach(9); 
   //myservo.write(0);
   Serial.begin(9600);
-  ss.begin(9600); //Begin GPS comms
   if (!bmp.begin_I2C()) {   // hardware I2C mode, can pass in address & alt Wire
   //if (! bmp.begin_SPI(BMP_CS)) {  // hardware SPI mode  
   //if (! bmp.begin_SPI(BMP_CS, BMP_SCK, BMP_MISO, BMP_MOSI)) {  // software SPI mode
@@ -82,6 +82,8 @@ void setup() {
 }
 
 void loop() {
+  boolean newData = false; //Sorry, but this has to be here
+  
   if (cycle_num == 1){
     //Serial.print("Start loop 1");
     sprintf_P(datastring,regular_message);
@@ -96,29 +98,37 @@ void loop() {
     char pressure_string[20];
     char lat_string[20];
     char long_string[20];
-    long latitude = 0.000000;
-    long longitude = 0.000000;
-      // For one second we parse GPS data and report some key values
-  for (unsigned long start = millis(); millis() - start < 1000;)
-  {
-    while (ss.available())
-    {
-      if (gps.encode(ss.read())) // Did a new valid sentence come in?
-        newData = true;
-    }
+    long latitude_SES = 0.000000;
+    long longitude_SES = 0.000000;
+      // For three seconds we parse GPS data and report some key values
+    bool read_data = false;
+  ss.begin(9600);
+  while (read_data == false)
+  
+  {    //Begin GPS comms
+      //Serial.print("GOOD.");
+      if (ss.available() > 0){
+        //Serial.print("Reading data");
+        if (gps.encode(ss.read())){
+            //Serial.print("Encoded data!");
+              if (gps.location.isValid())
+              {
+                //Serial.print("Valid location!");
+                latitude_SES = gps.location.lat();
+                longitude_SES = gps.location.lng();
+                Serial.print(latitude_SES);
+                Serial.print(longitude_SES);
+                read_data = true;
+                //Serial.print(F("VALID LOCATION FOUND!!!"));
+                
+              }
+          
+        }
+      }
+      
   }
-  if (newData){
-    if (gps.location.isValid())
-  {
-    latitude = gps.location.lat();
-    longitude = gps.location.lng();
-    newData = false;
-  }
-  }
-  else{
-    latitude = 0.000000;
-    longitude = 0.000000;
-  }
+    read_data = false; //Prepare for next time we run
+    ss.end(); //Very important
   
     //Serial.print("Start.");
     sprintf(datastring,"TLM: ");
@@ -132,23 +142,24 @@ void loop() {
     long temp = read_temp()*100;
     long alt = read_alt()*100;
     long pressure = read_pressure()*100;
-    latitude = latitude*1000000;
-    longitude = longitude * -1000000; //ONLY WORKS FOR TORONTO, ONTARIO!!!!
+    latitude_SES = latitude_SES*1000000;
+    longitude_SES = longitude_SES * -1000000; //ONLY WORKS FOR TORONTO, ONTARIO!!!!
     //Serial.print(pressure);
     //Serial.print("\n");
     ltoa(temp,temp_string,10);
     ltoa(alt,alt_string,10);
     ltoa(pressure,pressure_string,10);
-    ltoa(latitude,lat_string,10);
-    ltoa(longitude,long_string,10);
+    ltoa(latitude_SES,lat_string,10);
+    ltoa(longitude_SES,long_string,10);
     //Serial.print(pressure_string);
-    Serial.print("Good.");
+    //Serial.print("Good.");
     //Serial.print(voltage);
     //Serial.print(voltage_string);
     //strcat(datastring,voltage_string);
+    //Serial.println(datastring);
     sprintf(datastring, "$$,%s,%s,%s,%s,%s\n",pressure_string,alt_string,temp_string,lat_string,long_string);
-    //Serial.print("Good. DATASTRING: ");
-    //Serial.print(datastring);
+    Serial.print("Good. DATASTRING: ");
+    Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
     char datastring[70];
     cycle_num = 0;
