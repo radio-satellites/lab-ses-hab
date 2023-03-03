@@ -32,7 +32,7 @@ extern char *__brkval;
 
 //Above: memory stuff
 
-#define SEALEVELPRESSURE_HPA (1000) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
+#define SEALEVELPRESSURE_HPA (1014) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
 
 Adafruit_BMP3XX bmp;
 
@@ -98,8 +98,8 @@ void loop() {
     char pressure_string[20];
     char lat_string[20];
     char long_string[20];
-    long latitude_SES = 0.000000;
-    long longitude_SES = 0.000000;
+    float latitude_SES = 0.000000;
+    float longitude_SES = 0.000000;
       // For three seconds we parse GPS data and report some key values
     bool read_data = false;
   ss.begin(9600);
@@ -116,8 +116,8 @@ void loop() {
                 //Serial.print("Valid location!");
                 latitude_SES = gps.location.lat();
                 longitude_SES = gps.location.lng();
-                Serial.print(latitude_SES);
-                Serial.print(longitude_SES);
+                //Serial.print(latitude_SES);
+                //Serial.print(longitude_SES);
                 read_data = true;
                 //Serial.print(F("VALID LOCATION FOUND!!!"));
                 
@@ -149,14 +149,16 @@ void loop() {
     ltoa(temp,temp_string,10);
     ltoa(alt,alt_string,10);
     ltoa(pressure,pressure_string,10);
-    ltoa(latitude_SES,lat_string,10);
-    ltoa(longitude_SES,long_string,10);
+    //ltoa(latitude_SES,lat_string,10);
+    //ltoa(longitude_SES,long_string,10);
     //Serial.print(pressure_string);
     //Serial.print("Good.");
     //Serial.print(voltage);
     //Serial.print(voltage_string);
     //strcat(datastring,voltage_string);
     //Serial.println(datastring);
+    dtostrf(latitude_SES, 7, 0, lat_string);
+    dtostrf(longitude_SES, 7, 0, long_string);
     sprintf(datastring, "$$,%s,%s,%s,%s,%s\n",pressure_string,alt_string,temp_string,lat_string,long_string);
     Serial.print("Good. DATASTRING: ");
     Serial.print(datastring);
@@ -348,7 +350,7 @@ long readVccaverage(){
 long read_pressure(){
   if (! bmp.performReading()) {
     Serial.println("Failed to perform reading :(");
-    return;
+    return 0;
   }
   return bmp.pressure / 100.0;
 }
@@ -356,7 +358,7 @@ long read_pressure(){
 long read_alt(){
   if (! bmp.performReading()) {
     Serial.println("Failed to perform reading :(");
-    return;
+    return 0;
   }
   return bmp.readAltitude(SEALEVELPRESSURE_HPA);
 }
@@ -364,7 +366,7 @@ long read_alt(){
 long read_temp(){
   if (! bmp.performReading()) {
     Serial.println("Failed to perform reading :(");
-    return;
+    return 0;
   }
   return bmp.temperature;
 }
