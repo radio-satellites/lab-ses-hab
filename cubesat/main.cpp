@@ -36,7 +36,7 @@ extern char *__brkval;
 
 Adafruit_BMP3XX bmp;
 
-char datastring[80];
+char datastring[90];
 
 const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
