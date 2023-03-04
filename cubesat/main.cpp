@@ -36,11 +36,11 @@ extern char *__brkval;
 
 Adafruit_BMP3XX bmp;
 
-char datastring[70];
+char datastring[80];
 
-const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
+const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
-int cycle_num = 2; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
+int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
 unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
 const long interval = 100; 
 unsigned long previousMillis = 0;  
@@ -159,12 +159,17 @@ void loop() {
     //Serial.println(datastring);
     dtostrf(latitude_SES, 7, 0, lat_string);
     dtostrf(longitude_SES, 7, 0, long_string);
-    sprintf(datastring, "$$,%s,%s,%s,%s,%s\n",pressure_string,alt_string,temp_string,lat_string,long_string);
-    Serial.print("Good. DATASTRING: ");
+    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,111\n",pressure_string,alt_string,temp_string,lat_string,long_string);
+    //Serial.print("Good. DATASTRING: ");
     Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
-    char datastring[70];
+    //char datastring[80];
     cycle_num = 0;
+    //delete alt_string;
+    //delete temp_string;
+    //delete pressure_string;
+    //delete lat_string;
+    //delete long_string;
     
   }
   /*
