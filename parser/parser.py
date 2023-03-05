@@ -1,6 +1,7 @@
 #example_string = "$$,99900,12100,2300,43669380,79521368" #test string
 
 def parse_string(string):
+    finished = False
     parameters = string.split(",")
     try:
         pressure = float(parameters[1])/100 #Recover the data back
@@ -23,5 +24,8 @@ def parse_string(string):
     except:
         longitude = 0
     
-    return pressure,altitude,temperature,latitude,longitude
+    if "." in parameters[6]:
+        #End of telemetry detected!
+        finished = True
+    return pressure,altitude,temperature,latitude,longitude,finished
 
