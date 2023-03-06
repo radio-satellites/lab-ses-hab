@@ -41,7 +41,7 @@ char datastring[90];
 const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
 int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
-unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
+//unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
 const long interval = 100; 
 unsigned long previousMillis = 0;  
 int ledState = LOW;  
@@ -198,7 +198,7 @@ void loop() {
   */
   
   cycle_num++;
-  cycles++;
+  //cycles++;
   //Serial.print(cycles);
   //Serial.print("\n");
     
@@ -271,7 +271,7 @@ void rtty_txbyte (char c)
       else {
         ledState = LOW;
       }
-   //digitalWrite(ledPin, ledState);
+   digitalWrite(ledPin, ledState);
    //Serial.print(ledState);
    //Serial.print("\n");
         
