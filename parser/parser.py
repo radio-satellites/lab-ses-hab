@@ -1,4 +1,3 @@
-
 def parse_string(string):
     parameters = string.split(",")
     num_correct = 0
