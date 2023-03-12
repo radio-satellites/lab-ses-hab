@@ -1,4 +1,7 @@
 # lab-ses-hab
+
+![LAB SES 1 Altitude test](https://i.ibb.co/crMDpR2/lses1-504.png)
+
 Software for the LAB-SES HAB (wip). It's really messy as of now. 
 
 Watchdog function hasn't been tested yet, but I'm pretty sure it works. EDIT: Yes it does work
