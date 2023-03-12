@@ -1,4 +1,3 @@
-#example_string = "$$,99900,12100,2300,43669380,79521368" #test string
 
 def parse_string(string):
     parameters = string.split(",")
