@@ -38,7 +38,7 @@ Adafruit_BMP3XX bmp;
 
 char datastring[90];
 
-const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
+const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM\n\n\n\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
 int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
 //unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
@@ -139,9 +139,9 @@ void loop() {
     //Serial.print("Good.");
     dtostrf(voltage, 4, 0, voltage_string);
     //Serial.print("Good.");
-    long temp = read_temp()*100;
-    long alt = read_alt()*100;
-    long pressure = read_pressure()*100;
+    long temp = read_temp();
+    long alt = read_alt();
+    long pressure = read_pressure();
     latitude_SES = latitude_SES*1000000;
     longitude_SES = longitude_SES * -1000000; //ONLY WORKS FOR TORONTO, ONTARIO!!!!
     //Serial.print(pressure);
@@ -159,7 +159,7 @@ void loop() {
     //Serial.println(datastring);
     dtostrf(latitude_SES, 7, 0, lat_string);
     dtostrf(longitude_SES, 7, 0, long_string);
-    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,111\n",pressure_string,alt_string,temp_string,lat_string,long_string);
+    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string);
     //Serial.print("Good. DATASTRING: ");
     Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
