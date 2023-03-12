@@ -4,6 +4,12 @@ import sys
 from datetime import datetime
 import parser
 import collections
+import time
+
+print("LAB SES 1 MISSION TELEMETRY DECODER/DASHBOARD")
+time.sleep(0.5)
+print("By VE3SVF")
+print("\n")
 
 _s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 _s.settimeout(1)
@@ -24,7 +30,22 @@ while True:
          #print(message)
          if _char == "\n":
              try:
-                print(parser.parse_string(packet))
+                pressure,altitude,temperature,latitude,longitude,frame_num = parser.parse_string(packet)
+                print("=======================NEW FRAME=======================")
+                print("----HEADER----")
+                print("Frame number: "+str(frame_num))
+                print("--------------")
+                print("--------------PAYLOAD--------------")
+                print("Pressure: "+str(pressure)+" hPa")
+                print("Altitude: "+str(altitude)+" m above sea level")
+                print("Temperature (inside): "+str(temperature)+" *C")
+                print("-----------------------------------")
+                print("------Location Data------")
+                print("Latitude: "+str(latitude))
+                print("Longitude: "+str(longitude))
+                print("-------------------------")
+                print("=======================================================")
+                print("\n")
                 packet = ""
              except Exception as e:
                 print(e)
