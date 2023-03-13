@@ -43,7 +43,8 @@ const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS T
 int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
 //unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
 const long interval = 100; 
-unsigned long previousMillis = 0;  
+unsigned long previousMillis = 0; 
+int frame_num = 0; 
 int ledState = LOW;  
 const int ledPin = 8; //Camera pin
 unsigned long chars;
@@ -98,6 +99,7 @@ void loop() {
     char pressure_string[20];
     char lat_string[20];
     char long_string[20];
+    char frame_num_string[20];
     float latitude_SES = 0.000000;
     float longitude_SES = 0.000000;
       // For three seconds we parse GPS data and report some key values
@@ -149,6 +151,7 @@ void loop() {
     ltoa(temp,temp_string,10);
     ltoa(alt,alt_string,10);
     ltoa(pressure,pressure_string,10);
+    itoa(frame_num,frame_num_string,10);
     //ltoa(latitude_SES,lat_string,10);
     //ltoa(longitude_SES,long_string,10);
     //Serial.print(pressure_string);
@@ -159,7 +162,7 @@ void loop() {
     //Serial.println(datastring);
     dtostrf(latitude_SES, 7, 0, lat_string);
     dtostrf(longitude_SES, 7, 0, long_string);
-    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string);
+    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
     //Serial.print("Good. DATASTRING: ");
     Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
@@ -170,6 +173,7 @@ void loop() {
     //delete pressure_string;
     //delete lat_string;
     //delete long_string;
+    frame_num++;
     
   }
   /*
