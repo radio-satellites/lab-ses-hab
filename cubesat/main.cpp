@@ -22,6 +22,7 @@ for the non-blocking camera help!!!
 #include "Adafruit_BMP3XX.h"
 #include <TinyGPSPlus.h>
 #include <SoftwareSerial.h>
+#include <avr/wdt.h>
 
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
@@ -34,11 +35,13 @@ extern char *__brkval;
 
 #define SEALEVELPRESSURE_HPA (1014) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
 
+#define maxcycles 24000
+
 Adafruit_BMP3XX bmp;
 
 char datastring[90];
 
-const char regular_message[] PROGMEM = {"LAB SES 1 CALLING PLEASE SEND REPORTS TO SASHA.NYC09 AT GMAIL.COM\n\n\n\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
+const char regular_message[] PROGMEM = {"LABSES1 SND RPRT SASHA.NYC09 AT GMAIL.COM\n\n\n\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
 int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
 //unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
@@ -50,6 +53,8 @@ const int ledPin = 8; //Camera pin
 unsigned long chars;
 unsigned short sentences, failed;
 
+unsigned long cameraCycles = 0; 
+
 static const int RXPin = 12, TXPin = 4;
 
 //Servo myservo;
@@ -59,6 +64,7 @@ SoftwareSerial ss(RXPin, TXPin);
 
 
 void setup() {
+  wdt_disable();
   //datastring.reserve(70); //MEMORYYYYYYYYYYYYYYYYYYYYYYY
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
@@ -80,20 +86,26 @@ void setup() {
     Serial.println("Failed to perform reading :(");
     return;
   }
+  wdt_enable(WDTO_8S);
 }
 
 void loop() {
   boolean newData = false; //Sorry, but this has to be here
   
   if (cycle_num == 1){
+    wdt_reset();
     //Serial.print("Start loop 1");
+    wdt_reset();
     sprintf_P(datastring,regular_message);
+    wdt_reset();
     rtty_txstring (datastring);
+    wdt_reset();
     char datastring[80];
     //Serial.print("Finished loop 1");
     
   }
   if (cycle_num == 2){
+    wdt_reset();
     char alt_string[20];
     char temp_string[20];
     char pressure_string[20];
@@ -112,6 +124,7 @@ void loop() {
       if (ss.available() > 0){
         //Serial.print("Reading data");
         if (gps.encode(ss.read())){
+              wdt_reset();
             //Serial.print("Encoded data!");
               if (gps.location.isValid())
               {
@@ -144,6 +157,13 @@ void loop() {
     long temp = read_temp();
     long alt = read_alt();
     long pressure = read_pressure();
+
+    if (alt <= 0){
+      alt = 0; // problems
+    }
+    if (temp <= 0){
+      temp = 0; 
+    }
     latitude_SES = latitude_SES*1000000;
     longitude_SES = longitude_SES * -1000000; //ONLY WORKS FOR TORONTO, ONTARIO!!!!
     //Serial.print(pressure);
@@ -265,12 +285,15 @@ void rtty_txbyte (char c)
  
   rtty_txbit (1); // Stop bit
   rtty_txbit (1); // Stop bit
+   wdt_reset(); // reset the watchdog
    //Trigger camera
-  unsigned long currentMillis = millis(); //Camera
+  if (cameraCycles <= maxcycles){
+    unsigned long currentMillis = millis(); //Camera
   if (currentMillis - previousMillis >= interval) {
      previousMillis = currentMillis;
       if (ledState == LOW) {
           ledState = HIGH;
+          cameraCycles++;
       } 
       else {
         ledState = LOW;
@@ -280,6 +303,9 @@ void rtty_txbyte (char c)
    //Serial.print("\n");
         
     }
+    
+  }
+  
 }
  
 void rtty_txbit (int bit)
