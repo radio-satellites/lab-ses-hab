@@ -15,3 +15,5 @@ Since the arduino will be running in a near space environment, a watchdog is nee
 main branch - code for the original LAB SES prototype. 
 
 cubesat - code for the latest "cubesat" model. Use this branch.
+
+heliotrope - experimental code for the new payload.
