@@ -8,8 +8,22 @@ This is not quite yet tested on real hardware (YET!)
 Thanks:
 https://wiki-content.arduino.cc/en/Tutorial/BuiltInExamples/BlinkWithoutDelay
 https://reference.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/
+https://github.com/markfickett/arduinomorse/
 
-for the non-blocking camera help!!!
+for the non-blocking camera help, plus non blocking morse!
+
+PINMAP:
+
+3 - RTTY output (audio)
+4 - True GPS TX pin (wire is GPS RX)
+5 - CW transmitter power switch
+6 - FM transmitter power switch
+7 - GPS TX pin seems to be wired here!?
+8 - Camera pin
+9 - Morse code transmitter symbol line
+12 - GPS RX pin (wire is GPS TX)
+A4 - BMP390 SDA
+A5 - BMP390 SCK
 
 */
 
@@ -22,6 +36,7 @@ for the non-blocking camera help!!!
 #include "Adafruit_BMP3XX.h"
 #include <TinyGPSPlus.h>
 #include <SoftwareSerial.h>
+#include <morse.h>
 #include <avr/wdt.h>
 
 #ifdef __arm__
@@ -35,6 +50,8 @@ extern char *__brkval;
 
 #define SEALEVELPRESSURE_HPA (1014) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
 
+#define morse_WPM 18 //Morse code WPM
+
 #define maxcycles 24000
 
 Adafruit_BMP3XX bmp;
@@ -42,6 +59,7 @@ Adafruit_BMP3XX bmp;
 #define cutdownpin 9
 
 char datastring[90];
+char CWdatastring[30];
 
 const char regular_message[] PROGMEM = {"LABSES1 SND RPRT SASHA.NYC09 AT GMAIL.COM\n\n\n\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
@@ -70,12 +88,26 @@ static const int RXPin = 12, TXPin = 4;
 TinyGPSPlus gps;
 SoftwareSerial ss(RXPin, TXPin);
 
+//Setup Morse TX
+LEDMorseSender sender(9);
+
 
 void setup() {
   wdt_disable();
   //datastring.reserve(70); //MEMORYYYYYYYYYYYYYYYYYYYYYYY
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
+  pinMode(5,OUTPUT); //CW transmitter
+  sender.setup(); //CW transmitter
+  pinMode(6,OUTPUT); //FM transmiter
+
+  //Setup transmitters
+  digitalWrite(5,HIGH);
+  digitalWrite(6,HIGH); //Enable all transmitters
+
+  //CW setup
+  sender.setWPM(morse_WPM);
+  
   //myservo.attach(9); 
   //myservo.write(0);
   Serial.begin(9600);
@@ -107,6 +139,7 @@ void setup() {
 
 void loop() {
   boolean newData = false; //Sorry, but this has to be here
+
   
   if (cycle_num == 1){
     wdt_reset();
@@ -169,7 +202,8 @@ void loop() {
   }
     read_data = false; //Prepare for next time we run
     ss.end(); //Very important
-  
+    
+
     //Serial.print("Start.");
     sprintf(datastring,"TLM: ");
     //Serial.print("Good.");
@@ -207,6 +241,17 @@ void loop() {
     //Serial.println(datastring);
     dtostrf(latitude_SES, 7, 0, lat_string);
     dtostrf(longitude_SES, 7, 0, long_string);
+    
+    //Send data to CW transmitter
+
+    if (!sender.continueSending())
+    {
+      //Push data to CW
+      sprintf(CWdatastring, "%s,%s",lat_string,long_string);
+      sender.setMessage(String(CWdatastring));
+      sender.startSending();
+    }
+    
     sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
     //Serial.print("Good. DATASTRING: ");
     Serial.print(datastring);
