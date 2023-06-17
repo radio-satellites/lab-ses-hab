@@ -21,6 +21,7 @@ PINMAP:
 7 - GPS TX pin seems to be wired here!?
 8 - Camera pin
 9 - Morse code transmitter symbol line
+10 - cutdown trigger low amp line
 12 - GPS RX pin (wire is GPS TX)
 A4 - BMP390 SDA
 A5 - BMP390 SCK
@@ -56,7 +57,8 @@ extern char *__brkval;
 
 Adafruit_BMP3XX bmp;
 
-#define cutdownpin 9
+//#define cutdownpin 10
+#define cutdownpin 9 //TESTING ONLY!!!
 
 char datastring[90];
 char CWdatastring[30];
@@ -83,13 +85,116 @@ unsigned long cameraCycles = 0;
 
 static const int RXPin = 12, TXPin = 4;
 
+//CW stuff
+
+struct t_mtab { char c, pat; } ;
+
+struct t_mtab morsetab[] = {
+    {'.', 106},
+  {',', 115},
+  {'?', 76},
+  {'/', 41},
+  {'A', 6},
+  {'B', 17},
+  {'C', 21},
+  {'D', 9},
+  {'E', 2},
+  {'F', 20},
+  {'G', 11},
+  {'H', 16},
+  {'I', 4},
+  {'J', 30},
+  {'K', 13},
+  {'L', 18},
+  {'M', 7},
+  {'N', 5},
+  {'O', 15},
+  {'P', 22},
+  {'Q', 27},
+  {'R', 10},
+  {'S', 8},
+  {'T', 3},
+  {'U', 12},
+  {'V', 24},
+  {'W', 14},
+  {'X', 25},
+  {'Y', 29},
+  {'Z', 19},
+  {'1', 62},
+  {'2', 60},
+  {'3', 56},
+  {'4', 48},
+  {'5', 32},
+  {'6', 33},
+  {'7', 35},
+  {'8', 39},
+  {'9', 47},
+  {'0', 63}
+} ;
+
+#define N_MORSE  (sizeof(morsetab)/sizeof(morsetab[0]))
+
+#define SPEED  (18) //Nice speed to TX some basic telemetry
+#define DOTLEN  (1200/SPEED)
+#define DASHLEN  (3*(1200/SPEED))
+
 //Servo myservo;
 
 TinyGPSPlus gps;
 SoftwareSerial ss(RXPin, TXPin);
 
 //Setup Morse TX
-LEDMorseSender sender(9);
+LEDMorseSender sender(9); //Pin to output
+
+void dash()
+{
+  digitalWrite(9, HIGH) ;
+  delay(DASHLEN);
+  digitalWrite(9, LOW) ;
+  delay(DOTLEN) ;
+}
+
+void dit()
+{
+  digitalWrite(9, HIGH) ;
+  delay(DOTLEN);
+  digitalWrite(9, LOW) ;
+  delay(DOTLEN);
+}
+
+void send(char c)
+{
+  int i ;
+  if (c == ' ') {
+    Serial.print(c) ;
+    delay(7*DOTLEN) ;
+    return ;
+  }
+  for (i=0; i<N_MORSE; i++) {
+    if (morsetab[i].c == c) {
+      unsigned char p = morsetab[i].pat ;
+      Serial.print(morsetab[i].c) ;
+
+      while (p != 1) {
+          if (p & 1)
+            dash() ;
+          else
+            dit() ;
+          p = p / 2 ;
+      }
+      delay(2*DOTLEN) ;
+      return ;
+    }
+  }
+}
+
+void sendmsg(char *str)
+{
+  while (*str)
+    send(*str++) ;
+  //Serial.println("");
+}
+
 
 
 void setup() {
@@ -105,8 +210,14 @@ void setup() {
   digitalWrite(5,HIGH);
   digitalWrite(6,HIGH); //Enable all transmitters
 
-  //CW setup
-  sender.setWPM(morse_WPM);
+ 
+
+  //Start sending CW!
+
+  //sender.setMessage(String("G00DBOY"));
+
+  //sender.startSending(); //Push to buffer
+  //sender.sendBlocking();
   
   //myservo.attach(9); 
   //myservo.write(0);
@@ -173,15 +284,20 @@ void loop() {
         //Serial.print("Reading data");
         if (gps.encode(ss.read())){
               wdt_reset();
+              
               if (gps.time.isValid()){
                 minute_time = gps.time.minute();
                 hour_time = gps.time.hour();
+                /*
                 if (hour_time >= hour_time_start+cutdown_time and minute_time >= minute_time_start and cutdown_trig == false){
+                  Serial.print("CUTDOWN");
                   //CUTDOOOOOOOOOOOOOOOOOOOWWWNNNNNNNNN
                   cutdown();
                   cutdown_trig == true; // no need to cutdown a zillion times
                 }
+                */
               }
+              
             //Serial.print("Encoded data!");
               if (gps.location.isValid())
               {
@@ -244,14 +360,10 @@ void loop() {
     
     //Send data to CW transmitter
 
-    if (!sender.continueSending())
-    {
-      //Push data to CW
+    if (cameraCycles % 5 == 0){
       sprintf(CWdatastring, "%s,%s",lat_string,long_string);
-      sender.setMessage(String(CWdatastring));
-      sender.startSending();
+      sendmsg(CWdatastring);
     }
-    
     sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
     //Serial.print("Good. DATASTRING: ");
     Serial.print(datastring);
@@ -434,9 +546,11 @@ void cutdown(){
   delay(300);
   //Finish downlink warning
   //Start cutdown
+  wdt_disable();
   digitalWrite(cutdownpin,HIGH); //Trigger cutdown
   delay(30000); //thirty seconds
   digitalWrite(cutdownpin,LOW); //End burn wire
+  wdt_enable(WDTO_8S);
   tone(3,700);
   wdt_reset();
   delay(300);
