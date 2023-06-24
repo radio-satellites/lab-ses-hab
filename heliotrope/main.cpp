@@ -8,9 +8,8 @@ This is not quite yet tested on real hardware (YET!)
 Thanks:
 https://wiki-content.arduino.cc/en/Tutorial/BuiltInExamples/BlinkWithoutDelay
 https://reference.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/
-https://github.com/markfickett/arduinomorse/
 
-for the non-blocking camera help, plus non blocking morse!
+for the non-blocking camera help, plus brainwagon for the morse table and clever encoding algorithm!
 
 PINMAP:
 
@@ -61,7 +60,7 @@ Adafruit_BMP3XX bmp;
 #define cutdownpin 9 //TESTING ONLY!!!
 
 char datastring[90];
-char CWdatastring[30];
+char CWdatastring[90];
 
 const char regular_message[] PROGMEM = {"LABSES1 SND RPRT SASHA.NYC09 AT GMAIL.COM\n\n\n\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
@@ -148,18 +147,26 @@ LEDMorseSender sender(9); //Pin to output
 
 void dash()
 {
-  digitalWrite(9, HIGH) ;
+  digitalWrite(9, HIGH);
+  wdt_reset();
   delay(DASHLEN);
+  wdt_reset();
   digitalWrite(9, LOW) ;
+  wdt_reset();
   delay(DOTLEN) ;
+  wdt_reset();
 }
 
 void dit()
 {
   digitalWrite(9, HIGH) ;
+  wdt_reset();
   delay(DOTLEN);
+  wdt_reset();
   digitalWrite(9, LOW) ;
+  wdt_reset();
   delay(DOTLEN);
+  wdt_reset();
 }
 
 void send(char c)
@@ -167,6 +174,7 @@ void send(char c)
   int i ;
   if (c == ' ') {
     Serial.print(c) ;
+    wdt_reset();
     delay(7*DOTLEN) ;
     return ;
   }
@@ -182,6 +190,7 @@ void send(char c)
             dit() ;
           p = p / 2 ;
       }
+      wdt_reset();
       delay(2*DOTLEN) ;
       return ;
     }
@@ -288,6 +297,8 @@ void loop() {
               if (gps.time.isValid()){
                 minute_time = gps.time.minute();
                 hour_time = gps.time.hour();
+                //Serial.println(hour_time);
+                //Serial.println(minute_time);
                 /*
                 if (hour_time >= hour_time_start+cutdown_time and minute_time >= minute_time_start and cutdown_trig == false){
                   Serial.print("CUTDOWN");
@@ -360,8 +371,9 @@ void loop() {
     
     //Send data to CW transmitter
 
-    if (cameraCycles % 5 == 0){
-      sprintf(CWdatastring, "%s,%s",lat_string,long_string);
+    if (cameraCycles % 1 == 0){
+      sprintf(CWdatastring, "%sAAA%s",lat_string,long_string);
+      Serial.println(CWdatastring);
       sendmsg(CWdatastring);
     }
     sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
