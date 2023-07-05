@@ -143,15 +143,16 @@ TinyGPSPlus gps;
 SoftwareSerial ss(RXPin, TXPin);
 
 //Setup Morse TX
-LEDMorseSender sender(9); //Pin to output
 
 void dash()
 {
-  digitalWrite(9, HIGH);
+  //digitalWrite(9, HIGH);
+  tone(9,440);
   wdt_reset();
   delay(DASHLEN);
   wdt_reset();
-  digitalWrite(9, LOW) ;
+  //digitalWrite(9, LOW) ;
+  noTone(9);
   wdt_reset();
   delay(DOTLEN) ;
   wdt_reset();
@@ -159,11 +160,13 @@ void dash()
 
 void dit()
 {
-  digitalWrite(9, HIGH) ;
+  //digitalWrite(9, HIGH) ;
+  tone(9,440);
   wdt_reset();
   delay(DOTLEN);
   wdt_reset();
-  digitalWrite(9, LOW) ;
+  //digitalWrite(9, LOW) ;
+  noTone(9);
   wdt_reset();
   delay(DOTLEN);
   wdt_reset();
@@ -212,8 +215,8 @@ void setup() {
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
   pinMode(5,OUTPUT); //CW transmitter
-  sender.setup(); //CW transmitter
   pinMode(6,OUTPUT); //FM transmiter
+  pinMode(9,OUTPUT); //CW...
 
   //Setup transmitters
   digitalWrite(5,HIGH);
@@ -255,6 +258,7 @@ void setup() {
   }
    ss.end(); // End GPS comms
   wdt_enable(WDTO_8S);
+  sendmsg("LSES1"); //Send start message!
 }
 
 void loop() {
