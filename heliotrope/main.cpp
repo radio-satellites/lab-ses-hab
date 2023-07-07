@@ -88,128 +88,10 @@ static const int RXPin = 12, TXPin = 4;
 
 RH_ASK driver(2000, 1, 9, 5);
 
-//CW stuff
-
-struct t_mtab { char c, pat; } ;
-
-struct t_mtab morsetab[] = {
-    {'.', 106},
-  {',', 115},
-  {'?', 76},
-  {'/', 41},
-  {'A', 6},
-  {'B', 17},
-  {'C', 21},
-  {'D', 9},
-  {'E', 2},
-  {'F', 20},
-  {'G', 11},
-  {'H', 16},
-  {'I', 4},
-  {'J', 30},
-  {'K', 13},
-  {'L', 18},
-  {'M', 7},
-  {'N', 5},
-  {'O', 15},
-  {'P', 22},
-  {'Q', 27},
-  {'R', 10},
-  {'S', 8},
-  {'T', 3},
-  {'U', 12},
-  {'V', 24},
-  {'W', 14},
-  {'X', 25},
-  {'Y', 29},
-  {'Z', 19},
-  {'1', 62},
-  {'2', 60},
-  {'3', 56},
-  {'4', 48},
-  {'5', 32},
-  {'6', 33},
-  {'7', 35},
-  {'8', 39},
-  {'9', 47},
-  {'0', 63}
-} ;
-
-#define N_MORSE  (sizeof(morsetab)/sizeof(morsetab[0]))
-
-#define SPEED  (18) //Nice speed to TX some basic telemetry
-#define DOTLEN  (1200/SPEED)
-#define DASHLEN  (3*(1200/SPEED))
-
 //Servo myservo;
 
 TinyGPSPlus gps;
 SoftwareSerial ss(RXPin, TXPin);
-
-//Setup Morse TX
-
-void dash()
-{
-  //digitalWrite(9, HIGH);
-  tone(9,440);
-  wdt_reset();
-  delay(DASHLEN);
-  wdt_reset();
-  //digitalWrite(9, LOW) ;
-  noTone(9);
-  wdt_reset();
-  delay(DOTLEN) ;
-  wdt_reset();
-}
-
-void dit()
-{
-  //digitalWrite(9, HIGH) ;
-  tone(9,440);
-  wdt_reset();
-  delay(DOTLEN);
-  wdt_reset();
-  //digitalWrite(9, LOW) ;
-  noTone(9);
-  wdt_reset();
-  delay(DOTLEN);
-  wdt_reset();
-}
-
-void send(char c)
-{
-  int i ;
-  if (c == ' ') {
-    Serial.print(c) ;
-    wdt_reset();
-    delay(7*DOTLEN) ;
-    return ;
-  }
-  for (i=0; i<N_MORSE; i++) {
-    if (morsetab[i].c == c) {
-      unsigned char p = morsetab[i].pat ;
-      Serial.print(morsetab[i].c) ;
-
-      while (p != 1) {
-          if (p & 1)
-            dash() ;
-          else
-            dit() ;
-          p = p / 2 ;
-      }
-      wdt_reset();
-      delay(2*DOTLEN) ;
-      return ;
-    }
-  }
-}
-
-void sendmsg(char *str)
-{
-  while (*str)
-    send(*str++) ;
-  //Serial.println("");
-}
 
 
 
@@ -354,11 +236,8 @@ void loop() {
     //Serial.print("Start.");
     sprintf(datastring,"TLM: ");
     //Serial.print("Good.");
-    char voltage_string[10]; //Just to be safe!
     //Serial.print("Good.");
-    int voltage = readVcc();
     //Serial.print("Good.");
-    dtostrf(voltage, 4, 0, voltage_string);
     //Serial.print("Good.");
     long temp = read_temp();
     long alt = read_alt();
@@ -545,24 +424,6 @@ void rtty_txbit (int bit)
  
 }
  
-uint16_t gps_CRC16_checksum (char *string)
-{
-  size_t i;
-  uint16_t crc;
-  uint8_t c;
- 
-  crc = 0xFFFF;
- 
-  // Calculate checksum ignoring the first two $s
-  for (i = 2; i < strlen(string); i++)
-  {
-    c = string[i];
-    crc = _crc_xmodem_update (crc, c);
-  }
- 
-  return crc;
-}  
-
 
 void cutdown(){
   //Cutdown function
@@ -594,39 +455,8 @@ void cutdown(){
   
   
 }
-long readVcc() {
-  long result;
-  // Read 1.1V reference against AVcc
-  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
-  delay(2); // Wait for Vref to settle
-  ADCSRA |= _BV(ADSC); // Convert
-  while (bit_is_set(ADCSRA,ADSC));
-  result = ADCL;
-  result |= ADCH<<8;
-  result = 1126400L / result; // Back-calculate AVcc in mV
-  return result;
-}
 
-float average (int * array, int len)  // assuming array is int.
-{
-  long sum = 0L ;  // sum will be larger than an item, long for safety.
-  for (int i = 0 ; i < len ; i++)
-    sum += array [i] ;
-  return  ((float) sum) / len ;  // average will be fractional, so float may be appropriate.
-}
-
-long readVccaverage(){
-  int adjustment_factor = 300; //This is for THE SPECIFIC HARDWARE running LAB SES 1. Change when switching to other arduinos!!
-  int average_array[255]; //Averaging array
-  long result;
-  for (int i = 0; i <= 255; i++) {
-    //Average 255 times
-    average_array[i] = readVcc();
-  }
-  result = average(average_array,255);
-  return result+adjustment_factor;
-}
-
+// sensor reading functions
 
 long read_pressure(){
   if (! bmp.performReading()) {
@@ -650,15 +480,4 @@ long read_temp(){
     return 0;
   }
   return bmp.temperature;
-}
-
-int freeMemory() {
-  char top;
-#ifdef __arm__
-  return &top - reinterpret_cast<char*>(sbrk(0));
-#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
-  return &top - __brkval;
-#else  // __arm__
-  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
-#endif  // __arm__
 }
