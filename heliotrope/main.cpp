@@ -38,6 +38,8 @@ A5 - BMP390 SCK
 #include <SoftwareSerial.h>
 #include <morse.h>
 #include <avr/wdt.h>
+#include <RH_ASK.h>
+#include <SPI.h> // Not actually used but needed to compile
 
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
@@ -83,6 +85,8 @@ const int cutdown_time = 3; //hours to cutdown time
 unsigned long cameraCycles = 0; 
 
 static const int RXPin = 12, TXPin = 4;
+
+RH_ASK driver(2000, 1, 9, 5);
 
 //CW stuff
 
@@ -214,13 +218,17 @@ void setup() {
   //datastring.reserve(70); //MEMORYYYYYYYYYYYYYYYYYYYYYYY
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
-  pinMode(5,OUTPUT); //CW transmitter
+  //pinMode(5,OUTPUT); //CW transmitter
   pinMode(6,OUTPUT); //FM transmiter
-  pinMode(9,OUTPUT); //CW...
+  //pinMode(9,OUTPUT); //CW...
 
   //Setup transmitters
   digitalWrite(5,HIGH);
   digitalWrite(6,HIGH); //Enable all transmitters
+
+  if (!driver.init()){
+         Serial.println("Backup telemetry transmitter init failed");
+  }
 
  
 
@@ -258,7 +266,8 @@ void setup() {
   }
    ss.end(); // End GPS comms
   wdt_enable(WDTO_8S);
-  sendmsg("LSES1"); //Send start message!
+  //sendmsg("G00DBOY"); //Send start message!
+ 
 }
 
 void loop() {
@@ -266,13 +275,17 @@ void loop() {
 
   
   if (cycle_num == 1){
+    //sendmsg("E");
     wdt_reset();
     //Serial.print("Start loop 1");
     wdt_reset();
     sprintf_P(datastring,regular_message);
+    //sendmsg("E");
     wdt_reset();
     rtty_txstring (datastring);
+    //sendmsg("E");
     wdt_reset();
+    //sendmsg("E");
     char datastring[80];
     //Serial.print("Finished loop 1");
     
@@ -288,7 +301,9 @@ void loop() {
     float latitude_SES = 0.000000;
     float longitude_SES = 0.000000;
     bool read_data = false;
+    //sendmsg("E");
   ss.begin(9600);
+  //sendmsg("E");
   while (read_data == false)
   
   {    //Begin GPS comms
@@ -297,6 +312,7 @@ void loop() {
         //Serial.print("Reading data");
         if (gps.encode(ss.read())){
               wdt_reset();
+              //sendmsg("E");
               
               if (gps.time.isValid()){
                 minute_time = gps.time.minute();
@@ -333,7 +349,7 @@ void loop() {
   }
     read_data = false; //Prepare for next time we run
     ss.end(); //Very important
-    
+    //sendmsg("E");
 
     //Serial.print("Start.");
     sprintf(datastring,"TLM: ");
@@ -347,7 +363,7 @@ void loop() {
     long temp = read_temp();
     long alt = read_alt();
     long pressure = read_pressure();
-
+    //sendmsg("E");
     if (alt <= 0){
       alt = 0; // problems
     }
@@ -376,9 +392,10 @@ void loop() {
     //Send data to CW transmitter
 
     if (cameraCycles % 1 == 0){
-      sprintf(CWdatastring, "%sAAA%s",lat_string,long_string);
+      sprintf(CWdatastring, "%s?%s?%s",lat_string,long_string,alt_string);
       Serial.println(CWdatastring);
-      sendmsg(CWdatastring);
+      //sendmsg(CWdatastring);
+      driver.send((uint8_t *)CWdatastring, strlen(CWdatastring));
     }
     sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
     //Serial.print("Good. DATASTRING: ");
