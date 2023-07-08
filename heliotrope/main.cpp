@@ -417,6 +417,7 @@ void rtty_txbit (int bit)
   }
  
   //                  delayMicroseconds(3370); // 300 baud
+  
   delayMicroseconds(10000); // For 50 Baud uncomment this and the line below. 
   delayMicroseconds(10150); // You can't do 20150 it just doesn't work as the
                             // largest value that will produce an accurate delay is 16383
