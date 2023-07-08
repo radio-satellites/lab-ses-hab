@@ -231,14 +231,10 @@ void loop() {
   }
     read_data = false; //Prepare for next time we run
     ss.end(); //Very important
-    //sendmsg("E");
 
-    //Serial.print("Start.");
+
     sprintf(datastring,"TLM: ");
-    //Serial.print("Good.");
-    //Serial.print("Good.");
-    //Serial.print("Good.");
-    //Serial.print("Good.");
+
     long temp = read_temp();
     long alt = read_alt();
     long pressure = read_pressure();
@@ -251,20 +247,12 @@ void loop() {
     }
     latitude_SES = latitude_SES*1000000;
     longitude_SES = longitude_SES * -1000000; //ONLY WORKS FOR TORONTO, ONTARIO!!!!
-    //Serial.print(pressure);
-    //Serial.print("\n");
+
     ltoa(temp,temp_string,10);
     ltoa(alt,alt_string,10);
     ltoa(pressure,pressure_string,10);
     itoa(frame_num,frame_num_string,10);
-    //ltoa(latitude_SES,lat_string,10);
-    //ltoa(longitude_SES,long_string,10);
-    //Serial.print(pressure_string);
-    //Serial.print("Good.");
-    //Serial.print(voltage);
-    //Serial.print(voltage_string);
-    //strcat(datastring,voltage_string);
-    //Serial.println(datastring);
+
     dtostrf(latitude_SES, 7, 0, lat_string);
     dtostrf(longitude_SES, 7, 0, long_string);
     
@@ -282,43 +270,13 @@ void loop() {
     rtty_txstring (datastring); //transmit it
     //char datastring[80];
     cycle_num = 0;
-    //delete alt_string;
-    //delete temp_string;
-    //delete pressure_string;
-    //delete lat_string;
-    //delete long_string;
+
     frame_num++;
     
   }
-  /*
-  if (cycles == 2000){
-    //CUTDOWN TIMEEEEEEEE
-    //Um... cutdown!
-    sprintf(datastring,"CUTDOWN IS A GO");
-    rtty_txstring (datastring);
-    
-    myservo.write(60);
-    delay(500);
-    myservo.write(0);
-    delay(500);
-    myservo.write(70);
-    delay(500);
-    myservo.write(0);
-    delay(500);
-    myservo.write(80);
-    delay(500);
-    myservo.write(0);
-    delay(500);
-    //Above: let's make sure everything works! :) :)
-    sprintf(datastring,"DEPLOY PARACHUTE SUCCESS");
-    rtty_txstring (datastring);
-  }
-  */
   
   cycle_num++;
-  //cycles++;
-  //Serial.print(cycles);
-  //Serial.print("\n");
+
     
 }
 
