@@ -38,8 +38,7 @@ A5 - BMP390 SCK
 #include <SoftwareSerial.h>
 #include <morse.h>
 #include <avr/wdt.h>
-#include <RH_ASK.h>
-#include <SPI.h> // Not actually used but needed to compile
+
 
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
@@ -86,8 +85,6 @@ unsigned long cameraCycles = 0;
 
 static const int RXPin = 12, TXPin = 4;
 
-RH_ASK driver(2000, 1, 9, 5);
-
 //Servo myservo;
 
 TinyGPSPlus gps;
@@ -105,12 +102,8 @@ void setup() {
   //pinMode(9,OUTPUT); //CW...
 
   //Setup transmitters
-  digitalWrite(5,HIGH);
-  digitalWrite(6,HIGH); //Enable all transmitters
-
-  if (!driver.init()){
-         Serial.println("Backup telemetry transmitter init failed");
-  }
+  //digitalWrite(5,HIGH);
+  //digitalWrite(6,HIGH); //Enable all transmitters
 
  
 
@@ -147,6 +140,10 @@ void setup() {
     }
   }
    ss.end(); // End GPS comms
+
+  //char testmessage[] = "TESTBAGUETTETESTSTTESTSTTESTSTSTETETETETETTESTEBAGUETTE1234345TESTSBAGUETTEBOYHUNGRYGOODBOYTESTSTESTSTESTS";
+
+  //rtty_txstring_300(testmessage);
   wdt_enable(WDTO_8S);
   //sendmsg("G00DBOY"); //Send start message!
  
@@ -259,10 +256,11 @@ void loop() {
     //Send data to CW transmitter
 
     if (cameraCycles % 1 == 0){
-      sprintf(CWdatastring, "%s?%s?%s",lat_string,long_string,alt_string);
+      sprintf(CWdatastring, "1101?%s?%s?%s",lat_string,long_string,alt_string);
       Serial.println(CWdatastring);
       //sendmsg(CWdatastring);
-      driver.send((uint8_t *)CWdatastring, strlen(CWdatastring));
+      //driver.send((uint8_t *)CWdatastring, strlen(CWdatastring));
+      rtty_txstring_300(CWdatastring);
     }
     sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
     //Serial.print("Good. DATASTRING: ");
@@ -280,6 +278,89 @@ void loop() {
     
 }
 
+
+//Functions for transmitting high speed 100bd telemetry
+
+void rtty_txstring_300 (char * string)
+{
+ 
+  /* Simple function to sent a char at a time to 
+     ** rtty_txbyte function. 
+    ** NB Each char is one byte (8 Bits)
+    Also a camera trigger function. This is because it runs fast enough, but not TOO fast.
+    */
+ 
+  char c;
+  
+  
+ 
+  c = *string++;
+ 
+  while ( c != '\0')
+  {
+    rtty_txbyte_300 (c);
+    c = *string++;
+    //cycles++; //Camera stuff
+      
+
+  }
+}
+ 
+ 
+void rtty_txbyte_300 (char c)
+{
+  /* Simple function to sent each bit of a char to 
+    ** rtty_txbit function. 
+    ** NB The bits are sent Least Significant Bit first
+    **
+    ** All chars should be preceded with a 0 and 
+    ** proceded with a 1. 0 = Start bit; 1 = Stop bit
+    **
+    */
+ 
+  int i;
+ 
+  rtty_txbit_300 (0); // Start bit
+ 
+  // Send bits for for char LSB first 
+ 
+  for (i=0;i<7;i++) // Change this here 7 or 8 for ASCII-7 / ASCII-8
+  {
+    if (c & 1) rtty_txbit_300(1); 
+ 
+    else rtty_txbit_300(0); 
+ 
+    c = c >> 1;
+ 
+  }
+ 
+  rtty_txbit_300 (1); // Stop bit
+  rtty_txbit_300 (1); // Stop bit
+  wdt_reset(); // reset the watchdog
+
+  
+}
+ 
+void rtty_txbit_300 (int bit)
+{
+  if (bit)
+  {
+    // high
+    tone(9,870);
+  }
+  else
+  {
+    // low
+    tone(9,520);
+ 
+  }
+ 
+  delayMicroseconds(10075); // 100 baud
+
+ 
+}
+
+//Functions for transmitting low rate (50bd) telemetry
 
 
 void rtty_txstring (char * string)
@@ -375,14 +456,13 @@ void rtty_txbit (int bit)
   }
  
   //                  delayMicroseconds(3370); // 300 baud
-  
   delayMicroseconds(10000); // For 50 Baud uncomment this and the line below. 
   delayMicroseconds(10150); // You can't do 20150 it just doesn't work as the
                             // largest value that will produce an accurate delay is 16383
                             // See : http://arduino.cc/en/Reference/DelayMicroseconds
  
 }
- 
+
 
 void cutdown(){
   //Cutdown function
