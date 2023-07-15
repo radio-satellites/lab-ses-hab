@@ -99,7 +99,7 @@ void setup() {
   pinMode(ledPin, OUTPUT); //Camera trigger
   //pinMode(5,OUTPUT); //CW transmitter
   pinMode(6,OUTPUT); //FM transmiter
-  //pinMode(9,OUTPUT); //CW...
+  pinMode(9,OUTPUT); //CW...
 
   //Setup transmitters
   //digitalWrite(5,HIGH);
@@ -141,7 +141,7 @@ void setup() {
   }
    ss.end(); // End GPS comms
 
-  //char testmessage[] = "TESTBAGUETTETESTSTTESTSTTESTSTSTETETETETETTESTEBAGUETTE1234345TESTSBAGUETTEBOYHUNGRYGOODBOYTESTSTESTSTESTS";
+  //char testmessage[] = "LAB SES 1 300 BAUD TEST";
 
   //rtty_txstring_300(testmessage);
   wdt_enable(WDTO_8S);
@@ -255,13 +255,18 @@ void loop() {
     
     //Send data to CW transmitter
 
-    if (cameraCycles % 1 == 0){
-      sprintf(CWdatastring, "1101?%s?%s?%s",lat_string,long_string,alt_string);
-      Serial.println(CWdatastring);
-      //sendmsg(CWdatastring);
-      //driver.send((uint8_t *)CWdatastring, strlen(CWdatastring));
-      rtty_txstring_300(CWdatastring);
-    }
+    //Serial.print("SEND DATASTRING");
+     noTone(3); //Needed to free up timer
+    
+    // Now, send fast 100bd telemetry
+     sprintf(CWdatastring, "1101?%s?%s?%s",lat_string,long_string,alt_string);
+     Serial.println(CWdatastring);
+     //sendmsg(CWdatastring);
+     //driver.send((uint8_t *)CWdatastring, strlen(CWdatastring));
+     //Serial.print("SEND DATASTRING");
+     rtty_txstring_300(CWdatastring);
+     noTone(9); //Stop 100bd
+   
     sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
     //Serial.print("Good. DATASTRING: ");
     Serial.print(datastring);
@@ -289,7 +294,8 @@ void rtty_txstring_300 (char * string)
     ** NB Each char is one byte (8 Bits)
     Also a camera trigger function. This is because it runs fast enough, but not TOO fast.
     */
- 
+
+  
   char c;
   
   
@@ -300,6 +306,7 @@ void rtty_txstring_300 (char * string)
   {
     rtty_txbyte_300 (c);
     c = *string++;
+    wdt_reset();
     //cycles++; //Camera stuff
       
 
@@ -317,7 +324,7 @@ void rtty_txbyte_300 (char c)
     ** proceded with a 1. 0 = Start bit; 1 = Stop bit
     **
     */
- 
+  
   int i;
  
   rtty_txbit_300 (0); // Start bit
