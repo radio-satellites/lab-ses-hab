@@ -258,12 +258,13 @@ void loop() {
     //Serial.print("SEND DATASTRING");
      noTone(3); //Needed to free up timer
     
-    // Now, send fast 100bd telemetry
-     sprintf(CWdatastring, "1101?%s?%s?%s",lat_string,long_string,alt_string);
+    // Now, send fast 100bd telemetry twice
+     sprintf(CWdatastring, "1101?%s?%s?%s\n\n",lat_string,long_string,alt_string);
      Serial.println(CWdatastring);
      //sendmsg(CWdatastring);
      //driver.send((uint8_t *)CWdatastring, strlen(CWdatastring));
      //Serial.print("SEND DATASTRING");
+     rtty_txstring_300(CWdatastring);
      rtty_txstring_300(CWdatastring);
      noTone(9); //Stop 100bd
    
@@ -358,7 +359,7 @@ void rtty_txbit_300 (int bit)
   else
   {
     // low
-    tone(9,520);
+    tone(9,445);
  
   }
  
