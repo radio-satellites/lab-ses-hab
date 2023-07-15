@@ -1,15 +1,11 @@
 /*
 LAB SES 1 High Altitude Balloon downlink firmware written by VE3SVF.
 
-***NEED TO FINISH*** camera trigger system. It has not been tested yet. 
-
-This is not quite yet tested on real hardware (YET!)
-
 Thanks:
 https://wiki-content.arduino.cc/en/Tutorial/BuiltInExamples/BlinkWithoutDelay
 https://reference.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/
 
-for the non-blocking camera help, plus brainwagon for the morse table and clever encoding algorithm!
+for the non-blocking camera help!
 
 PINMAP:
 
