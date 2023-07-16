@@ -255,7 +255,10 @@ void loop() {
      noTone(3); //Needed to free up timer
     
     // Now, send fast 100bd telemetry twice
-     sprintf(CWdatastring, "1101?%s?%s?%s\n\n",lat_string,long_string,alt_string);
+    //Send receiver clock synchronization string first
+    
+     rtty_txstring_300("LSES1\n\n");
+     sprintf(CWdatastring, "AABA?%s?%s?%sRRR\n\n",lat_string,long_string,alt_string);
      Serial.println(CWdatastring);
      //sendmsg(CWdatastring);
      //driver.send((uint8_t *)CWdatastring, strlen(CWdatastring));
@@ -264,7 +267,7 @@ void loop() {
      rtty_txstring_300(CWdatastring);
      noTone(9); //Stop 100bd
    
-    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,111\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
+    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,EEE\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
     //Serial.print("Good. DATASTRING: ");
     Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
@@ -431,6 +434,7 @@ void rtty_txbyte (char c)
       if (ledState == LOW) {
           ledState = HIGH;
           cameraCycles++;
+          Serial.print(cameraCycles);
       } 
       else {
         ledState = LOW;
