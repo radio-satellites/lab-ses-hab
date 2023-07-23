@@ -55,7 +55,7 @@ Adafruit_BMP3XX bmp;
 
 /////////////////////////////////// CHANGE THESE //////////////////////////////////////
 
-#define cutdown_alt 120 //Meters AGL
+#define cutdown_alt 10000 //Meters AGL
 
 #define SEALEVELPRESSURE_HPA (1014) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
 
