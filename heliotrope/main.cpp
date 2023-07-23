@@ -45,16 +45,25 @@ extern char *__brkval;
 
 //Above: memory stuff
 
-#define SEALEVELPRESSURE_HPA (1014) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
 
-#define morse_WPM 18 //Morse code WPM
 
-#define maxcycles 24000
 
 Adafruit_BMP3XX bmp;
 
 //#define cutdownpin 10
 #define cutdownpin 9 //TESTING ONLY!!!
+
+/////////////////////////////////// CHANGE THESE //////////////////////////////////////
+
+#define cutdown_alt 120 //Meters AGL
+
+#define SEALEVELPRESSURE_HPA (1014) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
+
+#define stop_camera 6000 //seconds
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+#define maxcycles stop_camera*4
 
 char datastring[90];
 char CWdatastring[90];
@@ -189,9 +198,9 @@ void loop() {
               wdt_reset();
               //sendmsg("E");
               
-              if (gps.time.isValid()){
-                minute_time = gps.time.minute();
-                hour_time = gps.time.hour();
+              //if (gps.time.isValid()){
+                //minute_time = gps.time.minute();
+                //hour_time = gps.time.hour();
                 //Serial.println(hour_time);
                 //Serial.println(minute_time);
                 /*
@@ -202,7 +211,7 @@ void loop() {
                   cutdown_trig == true; // no need to cutdown a zillion times
                 }
                 */
-              }
+              //}
               
             //Serial.print("Encoded data!");
               if (gps.location.isValid())
@@ -259,7 +268,7 @@ void loop() {
     
      rtty_txstring_300("LSES1\n\n");
      sprintf(CWdatastring, "AABA?%s?%s?%sRRR\n\n",lat_string,long_string,alt_string);
-     Serial.println(CWdatastring);
+     //Serial.println(CWdatastring);
      //sendmsg(CWdatastring);
      //driver.send((uint8_t *)CWdatastring, strlen(CWdatastring));
      //Serial.print("SEND DATASTRING");
@@ -267,14 +276,22 @@ void loop() {
      rtty_txstring_300(CWdatastring);
      noTone(9); //Stop 100bd
    
-    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,EEE\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string);
+    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,EEE\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string); //No need to send sync on this one, because it's already sent
     //Serial.print("Good. DATASTRING: ");
-    Serial.print(datastring);
+    //Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
     //char datastring[80];
     cycle_num = 0;
 
     frame_num++;
+
+    //Check for cutdown
+    if (alt >= cutdown_alt and cutdown_trig == false){
+      Serial.print("INIT CUTDOWN!");
+      cutdown_trig = true;
+      //Cutdown
+      cutdown();
+    }
     
   }
   
@@ -434,7 +451,7 @@ void rtty_txbyte (char c)
       if (ledState == LOW) {
           ledState = HIGH;
           cameraCycles++;
-          Serial.print(cameraCycles);
+          //Serial.print(cameraCycles);
       } 
       else {
         ledState = LOW;
