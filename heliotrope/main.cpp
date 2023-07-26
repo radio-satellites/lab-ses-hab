@@ -57,6 +57,8 @@ Adafruit_BMP3XX bmp;
 
 #define cutdown_alt 10000 //Meters AGL
 
+#define lower_cutdown_alt 9000 //Meters AGL lower range of cutdown
+
 #define SEALEVELPRESSURE_HPA (1014) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
 
 #define stop_camera 6000 //seconds
@@ -287,10 +289,19 @@ void loop() {
 
     //Check for cutdown
     if (alt >= cutdown_alt and cutdown_trig == false){
-      Serial.print("INIT CUTDOWN!");
+      //Serial.print("INIT CUTDOWN!");
       cutdown_trig = true;
-      //Cutdown
-      cutdown();
+      //Cutdown loop - if not below 9km, continue cutdown
+      bool below_limit = false;
+      while (below_limit == false){
+        cutdown();
+        long alt = read_alt(); //Read altitude again
+         if (alt <= lower_cutdown_alt){
+            below_limit = true;
+         }
+        
+      }
+        
     }
     
   }
