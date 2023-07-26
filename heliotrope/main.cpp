@@ -50,8 +50,8 @@ extern char *__brkval;
 
 Adafruit_BMP3XX bmp;
 
-//#define cutdownpin 10
-#define cutdownpin 9 //TESTING ONLY!!!
+#define cutdownpin 10
+//#define cutdownpin 9 //TESTING ONLY!!!
 
 /////////////////////////////////// CHANGE THESE //////////////////////////////////////
 
