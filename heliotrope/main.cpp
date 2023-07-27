@@ -507,6 +507,7 @@ void rtty_txbit (int bit)
  
 }
 
+/*
 
 void cutdown(){
   //Cutdown function
@@ -538,6 +539,8 @@ void cutdown(){
   
   
 }
+
+*/
 
 // sensor reading functions
 
