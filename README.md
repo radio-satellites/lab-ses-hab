@@ -1,6 +1,6 @@
 # lab-ses-hab
 
-![LAB SES 1 Altitude test](https://i.ibb.co/d51G3Xk/lses1-504.png)
+![LAB SES 1 Altitude test](https://i.ibb.co/k4WZvzg/lses1-504.png)
 
 Software for the LAB-SES HAB (wip). It's really messy as of now. 
 
