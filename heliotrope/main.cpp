@@ -280,7 +280,7 @@ void loop() {
    
     sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,EEE\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string); //No need to send sync on this one, because it's already sent
     //Serial.print("Good. DATASTRING: ");
-    //Serial.print(datastring);
+    Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
     //char datastring[80];
     cycle_num = 0;
@@ -294,13 +294,16 @@ void loop() {
       //Cutdown loop - if not below 9km, continue cutdown
       bool below_limit = false;
       while (below_limit == false){
-        cutdown();
+        //cutdown();
+         digitalWrite(cutdownpin,HIGH); //Trigger cutdown
         long alt = read_alt(); //Read altitude again
          if (alt <= lower_cutdown_alt){
             below_limit = true;
          }
         
       }
+      
+      digitalWrite(cutdownpin,LOW); //End burn wire
         
     }
     
