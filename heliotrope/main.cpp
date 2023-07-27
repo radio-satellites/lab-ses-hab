@@ -55,9 +55,9 @@ Adafruit_BMP3XX bmp;
 
 /////////////////////////////////// CHANGE THESE //////////////////////////////////////
 
-#define cutdown_alt 10000 //Meters AGL
+#define cutdown_alt 142 //Meters AGL
 
-#define lower_cutdown_alt 9000 //Meters AGL lower range of cutdown
+#define lower_cutdown_alt 139 //Meters AGL lower range of cutdown
 
 #define SEALEVELPRESSURE_HPA (1014) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
 
@@ -288,14 +288,19 @@ void loop() {
     frame_num++;
 
     //Check for cutdown
-    if (alt >= cutdown_alt and cutdown_trig == false){
-      //Serial.print("INIT CUTDOWN!");
+    //Serial.println(alt);
+    //Serial.println(cutdown_alt);
+    //Serial.println(cutdown_trig);
+    if (int(alt) >= cutdown_alt and cutdown_trig == false){
+      Serial.print("INIT CUTDOWN!");
       cutdown_trig = true;
       //Cutdown loop - if not below 9km, continue cutdown
       bool below_limit = false;
       while (below_limit == false){
+        //Serial.println("WHILE LOOP!");
         //cutdown();
-         digitalWrite(cutdownpin,HIGH); //Trigger cutdown
+        digitalWrite(cutdownpin,HIGH); //Trigger cutdown
+        wdt_reset();
         long alt = read_alt(); //Read altitude again
          if (alt <= lower_cutdown_alt){
             below_limit = true;
