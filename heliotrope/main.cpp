@@ -104,7 +104,7 @@ void setup() {
   //datastring.reserve(70); //MEMORYYYYYYYYYYYYYYYYYYYYYYY
   pinMode(3,OUTPUT); //RTTY output
   pinMode(ledPin, OUTPUT); //Camera trigger
-  //pinMode(5,OUTPUT); //CW transmitter
+  pinMode(cutdownpin,OUTPUT); //Cutdown pin
   pinMode(6,OUTPUT); //FM transmiter
   pinMode(9,OUTPUT); //CW...
 
