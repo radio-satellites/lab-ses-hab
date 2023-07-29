@@ -55,11 +55,11 @@ Adafruit_BMP3XX bmp;
 
 /////////////////////////////////// CHANGE THESE //////////////////////////////////////
 
-#define cutdown_alt 142 //Meters AGL
+#define cutdown_alt 11000 //Meters AGL
 
-#define lower_cutdown_alt 141 //Meters AGL lower range of cutdown
+#define lower_cutdown_alt 9000 //Meters AGL lower range of cutdown
 
-#define SEALEVELPRESSURE_HPA (1014) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
+#define SEALEVELPRESSURE_HPA (1010.6) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
 
 #define stop_camera 6000 //seconds
 
@@ -72,7 +72,7 @@ char CWdatastring[90];
 
 const char regular_message[] PROGMEM = {"LABSES1 SND RPRT SASHA.NYC09 AT GMAIL.COM\n\n\n\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
-const char easter_egg[] PROGMEM = {"EASTER EGG!\n CMD>baguettes received! Transfer 5 baguettes \n\n BAGUETTEBAGUETTEBAGUETTEBAGUETTEBAGUETTE bit.ly/3OztoN2"};
+const char easter_egg[] PROGMEM = {"EASTER EGG!\n CMD>baguettes received! Transfer 5 baguettes \n\n BAGUETTEBAGUETTEBAGUETTEBAGUETTEBAGUETTE bit.ly/3OztoN2\n\n"};
 
 int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
 //unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
@@ -88,7 +88,6 @@ int hour_time;
 int minute_time_start;
 int hour_time_start;
 bool cutdown_trig = false;
-const int cutdown_time = 3; //hours to cutdown time
 
 unsigned long cameraCycles = 0; 
 
@@ -110,21 +109,6 @@ void setup() {
   pinMode(6,OUTPUT); //FM transmiter
   pinMode(9,OUTPUT); //CW...
 
-  //Setup transmitters
-  //digitalWrite(5,HIGH);
-  //digitalWrite(6,HIGH); //Enable all transmitters
-
- 
-
-  //Start sending CW!
-
-  //sender.setMessage(String("G00DBOY"));
-
-  //sender.startSending(); //Push to buffer
-  //sender.sendBlocking();
-  
-  //myservo.attach(9); 
-  //myservo.write(0);
   Serial.begin(9600);
   if (!bmp.begin_I2C()) {   // hardware I2C mode, can pass in address & alt Wire
   //if (! bmp.begin_SPI(BMP_CS)) {  // hardware SPI mode  
@@ -154,7 +138,6 @@ void setup() {
 
   //rtty_txstring_300(testmessage);
   wdt_enable(WDTO_8S);
-  //sendmsg("G00DBOY"); //Send start message!
  
 }
 
@@ -200,33 +183,13 @@ void loop() {
         //Serial.print("Reading data");
         if (gps.encode(ss.read())){
               wdt_reset();
-              //sendmsg("E");
-              
-              //if (gps.time.isValid()){
-                //minute_time = gps.time.minute();
-                //hour_time = gps.time.hour();
-                //Serial.println(hour_time);
-                //Serial.println(minute_time);
-                /*
-                if (hour_time >= hour_time_start+cutdown_time and minute_time >= minute_time_start and cutdown_trig == false){
-                  Serial.print("CUTDOWN");
-                  //CUTDOOOOOOOOOOOOOOOOOOOWWWNNNNNNNNN
-                  cutdown();
-                  cutdown_trig == true; // no need to cutdown a zillion times
-                }
-                */
-              //}
-              
-            //Serial.print("Encoded data!");
+             
               if (gps.location.isValid())
               {
                 //Serial.print("Valid location!");
                 latitude_SES = gps.location.lat();
                 longitude_SES = gps.location.lng();
-                //Serial.print(latitude_SES);
-                //Serial.print(longitude_SES);
                 read_data = true;
-                //Serial.print(F("VALID LOCATION FOUND!!!"));
                 
               }
               
@@ -263,14 +226,7 @@ void loop() {
     dtostrf(longitude_SES, 7, 0, long_string);
 
     sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,EEE\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string); //No need to send sync on this one, because it's already sent
-    //Serial.print("Good. DATASTRING: ");
-    //Serial.print(datastring);
     rtty_txstring (datastring); //transmit it
-    //char datastring[80];
-    
-    //Send data to CW transmitter
-
-    //Serial.print("SEND DATASTRING");
      noTone(3); //Needed to free up timer
     
     // Now, send fast 100bd telemetry twice
@@ -278,10 +234,6 @@ void loop() {
     
      rtty_txstring_300("LSES1\n\n");
      sprintf(CWdatastring, "AABA?%s?%s?%sRRR\n\n",lat_string,long_string,alt_string);
-     //Serial.println(CWdatastring);
-     //sendmsg(CWdatastring);
-     //driver.send((uint8_t *)CWdatastring, strlen(CWdatastring));
-     //Serial.print("SEND DATASTRING");
       rtty_txstring_300(CWdatastring);
       rtty_txstring_300(CWdatastring);
 
@@ -297,9 +249,6 @@ void loop() {
     frame_num++;
 
     //Check for cutdown
-    //Serial.println(alt);
-    //Serial.println(cutdown_alt);
-    //Serial.println(cutdown_trig);
     if (int(alt) >= cutdown_alt and cutdown_trig == false){
       Serial.print("INIT CUTDOWN!");
       cutdown_trig = true;
