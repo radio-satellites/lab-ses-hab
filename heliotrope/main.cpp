@@ -72,6 +72,8 @@ char CWdatastring[90];
 
 const char regular_message[] PROGMEM = {"LABSES1 SND RPRT SASHA.NYC09 AT GMAIL.COM\n\n\n\n"}; //Prevent things from getting finicky, i.e SRAM usage i.e regular crashes
 
+const char easter_egg[] PROGMEM = {"EASTER EGG!\n CMD>baguettes received! Transfer 5 baguettes \n\n BAGUETTEBAGUETTEBAGUETTEBAGUETTEBAGUETTE bit.ly/3OztoN2"};
+
 int cycle_num = 1; //This is used to keep track of what to transmit in the RTTY beacon, telemetry or reception stuff
 //unsigned long cycles = 0; //Originally an int object, but it gets long *fast*
 const long interval = 100; 
@@ -259,6 +261,12 @@ void loop() {
 
     dtostrf(latitude_SES, 7, 0, lat_string);
     dtostrf(longitude_SES, 7, 0, long_string);
+
+    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,EEE\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string); //No need to send sync on this one, because it's already sent
+    //Serial.print("Good. DATASTRING: ");
+    //Serial.print(datastring);
+    rtty_txstring (datastring); //transmit it
+    //char datastring[80];
     
     //Send data to CW transmitter
 
@@ -279,12 +287,6 @@ void loop() {
 
      noTone(9); //Stop 100bd
    
-    sprintf(datastring, "AAAA,%s,%s,%s,%s,%s,%s,EEE\n\n\n\n\n",pressure_string,alt_string,temp_string,lat_string,long_string,frame_num_string); //No need to send sync on this one, because it's already sent
-    //Serial.print("Good. DATASTRING: ");
-    Serial.print(datastring);
-    rtty_txstring (datastring); //transmit it
-    //char datastring[80];
-
     if (cutdown_trig == false){
       cycle_num = 0;
     }
@@ -322,6 +324,10 @@ void loop() {
   }
   
   cycle_num++;
+
+  if (frame_num == 50){
+    rtty_txstring(easter_egg);
+  }
 
     
 }
