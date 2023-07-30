@@ -57,6 +57,8 @@ Adafruit_BMP3XX bmp;
 
 #define cutdown_alt 11000 //Meters AGL
 
+#define camera_trigger_alt 9000 //Altitude to start taking pictures in meters AGL 
+
 #define lower_cutdown_alt 9000 //Meters AGL lower range of cutdown
 
 #define SEALEVELPRESSURE_HPA (1010.6) //Change depending on location. Here it's about 1000. Can be a decimal. Measured in hmp.
@@ -83,13 +85,8 @@ int ledState = LOW;
 const int ledPin = 8; //Camera pin
 unsigned long chars;
 unsigned short sentences, failed;
-int minute_time;
-int hour_time;
-int minute_time_start;
-int hour_time_start;
 bool cutdown_trig = false;
-
-unsigned long cameraCycles = 0; 
+bool camera_on = false;
 
 static const int RXPin = 12, TXPin = 4;
 
@@ -125,17 +122,7 @@ void setup() {
     Serial.println("Failed to perform reading :(");
     return;
   }
-  ss.begin(9600);
-  if (ss.available() > 0){
-    if (gps.encode(ss.read())){
-      minute_time_start = gps.time.minute();
-      hour_time_start = gps.time.hour();
-    }
-  }
-   ss.end(); // End GPS comms
-
   //char testmessage[] = "LAB SES 1 300 BAUD TEST";
-
   //rtty_txstring_300(testmessage);
   wdt_enable(WDTO_8S);
  
@@ -268,6 +255,13 @@ void loop() {
       
       digitalWrite(cutdownpin,LOW); //End burn wire
         
+    }
+
+    if (int(alt) >= camera_trigger_alt){
+      camera_on = true; //Turn on camera
+    }
+    else{
+      camera_on = false;
     }
     
   }
@@ -425,14 +419,12 @@ void rtty_txbyte (char c)
   rtty_txbit (1); // Stop bit
   wdt_reset(); // reset the watchdog
    //Trigger camera
-  if (cameraCycles <= maxcycles){
+  if (camera_on == false){
     unsigned long currentMillis = millis(); //Camera
   if (currentMillis - previousMillis >= interval) {
      previousMillis = currentMillis;
       if (ledState == LOW) {
           ledState = HIGH;
-          cameraCycles++;
-          //Serial.print(cameraCycles);
       } 
       else {
         ledState = LOW;
