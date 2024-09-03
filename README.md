@@ -2,6 +2,8 @@
 
 ![LAB SES 1 Altitude test](https://i.ibb.co/k4WZvzg/lses1-504.png)
 
+***EDIT: IMPORTANT! Do not use this repository. It was built for an old piece of hardware that doesn't work anymore. ***
+
 Software for the LAB-SES HAB (wip). It's really messy as of now. 
 
 Watchdog function hasn't been tested yet, but I'm pretty sure it works. EDIT: Yes it does work
