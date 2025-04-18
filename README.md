@@ -2,7 +2,7 @@
 
 ![LAB SES 1 Altitude test](https://i.ibb.co/k4WZvzg/lses1-504.png)
 
-***EDIT: IMPORTANT! Do not use this repository. It was built for an old piece of hardware that doesn't work anymore. ***
+**IMPORTANT! Do not use this repository for real software, only for reference about how bad old software is. It was built for an ancient piece of hardware that does not work anymore.**
 
 Software for the LAB-SES HAB (wip). It's really messy as of now. 
 
